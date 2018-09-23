@@ -132,11 +132,15 @@ class SimpleData:
         self.one_var_uri = ["a", "*"]
         self.two_var_uri = ["b", "*", "*"]
         self.three_var_uri = ["c", "*", "*", "*"]
+        self.zero_var_uri = format_uri(["d", "c", "b", "a"])
         self.static_uris = []
 
     def get_static_uris(self):
         for p in self.static_uris:
             yield format_uri(p)
+
+    def get_zero_var_uri(self, param_format=ParamFormat.SANIC):
+        return self.zero_var_uri
 
     def get_one_var_uri(self, param_format=ParamFormat.SANIC):
         return format_dynamic_uri(self.one_var_uri, "one", param_format)
@@ -146,6 +150,9 @@ class SimpleData:
 
     def get_three_var_uri(self, param_format=ParamFormat.SANIC):
         return format_dynamic_uri(self.three_var_uri, "one", param_format)
+
+    def populate_zero_var_uri(self, *values):
+        return self.zero_var_uri
 
     def populate_one_var_uri(self, *values):
         return populate_dynamic_uri(self.one_var_uri, values)
@@ -184,3 +191,7 @@ class BenchData(SimpleData):
         self.static_uris = generate_test_uris(
             data, avoid=[one_var_start, two_var_start, three_var_start]
         )
+
+        self.zero_var_uri = random.choice(self.static_uris)
+        del self.static_uris[self.static_uris.index(self.zero_var_uri)]
+        self.zero_var_uri = format_uri(self.zero_var_uri)

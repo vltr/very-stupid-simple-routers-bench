@@ -1,18 +1,16 @@
 import random
+import sys
 import timeit
 import uuid
 
 import kua
+import matplotlib.pyplot as plt
+from extras import Endpoint, res_factory
 from falcon.routing import CompiledRouter
 from routes import Mapper
 from sanic.router import Router
+from uridata import BenchData, ParamFormat, SimpleData
 from xrtr import RadixTree
-
-from extras import Endpoint
-from extras import res_factory
-from uridata import BenchData
-from uridata import ParamFormat
-from uridata import SimpleData
 
 _IMP_STMT = """import random
 import uuid
@@ -51,7 +49,9 @@ def gen_stmt(router_call, uris, nvars, complex, is_sanic=False, is_xrtr=False):
         params = ["gen_uuid()"] * nvars
     else:
         params = ["gen_int()"] * nvars
-    if nvars == 1:
+    if nvars == 0:
+        fn = "populate_zero_var_uri"
+    elif nvars == 1:
         fn = "populate_one_var_uri"
     elif nvars == 2:
         fn = "populate_two_var_uri"
@@ -92,6 +92,10 @@ def create_falcon_router(uri_data):
         res = res_factory(u, ["GET"])
         router.add_route(u, method_map=None, resource=res)
 
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.FALCON)
+    res = res_factory(template, ["GET"])
+    router.add_route(template, method_map=None, resource=res)
     # one variable
     template = uri_data.get_one_var_uri(ParamFormat.FALCON)
     res = res_factory(template, ["GET"])
@@ -115,6 +119,9 @@ def create_kua_router(uri_data):
     for u in uri_data.get_static_uris():
         router.add(u, {"GET": endpoint})
 
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.KUA)
+    router.add(template, {"GET": endpoint})
     # one variable
     template = uri_data.get_one_var_uri(ParamFormat.KUA)
     router.add(template, {"GET": endpoint})
@@ -135,6 +142,9 @@ def create_routes_router(uri_data):
     for u in uri_data.get_static_uris():
         router.connect(None, u, controller=endpoint)
 
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.ROUTES)
+    router.connect(None, template, controller=endpoint)
     # one variable
     template = uri_data.get_one_var_uri(ParamFormat.ROUTES)
     router.connect(None, template, controller=endpoint)
@@ -155,6 +165,9 @@ def create_sanic_router(uri_data):
     for u in uri_data.get_static_uris():
         router.add(u, methods=["GET"], handler=endpoint)
 
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.SANIC)
+    router.add(template, methods=["GET"], handler=endpoint)
     # one variable
     template = uri_data.get_one_var_uri(ParamFormat.SANIC)
     router.add(template, methods=["GET"], handler=endpoint)
@@ -175,6 +188,9 @@ def create_xrtr_router(uri_data):
     for u in uri_data.get_static_uris():
         router.insert(u, endpoint, ["GET"])
 
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.XRTR)
+    router.insert(template, endpoint, ["GET"])
     # one variable
     template = uri_data.get_one_var_uri(ParamFormat.XRTR)
     router.insert(template, endpoint, ["GET"])
@@ -230,17 +246,18 @@ def main():
     global lots_of_uris
 
     minimal_uris, lots_of_uris = create_bench_data()
+    num_vars = ["ZERO", "ONE", "TWO", "THREE"]
 
     # ----------------------------------------------------------------------- #
     falcon_compiled_router_minimal = create_falcon_router(minimal_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "falcon_compiled_router_minimal.find", "minimal_uris", i + 1, False
+            "falcon_compiled_router_minimal.find", "minimal_uris", i, False
         )
         res["falcon"]["min"]["simple"][k] = measure_router(
             "falcon_compiled_router_minimal", run_stmt
@@ -250,7 +267,7 @@ def main():
             "MINIMAL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "falcon_compiled_router_minimal.find", "minimal_uris", i + 1, True
+            "falcon_compiled_router_minimal.find", "minimal_uris", i, True
         )
         res["falcon"]["min"]["complex"][k] = measure_router(
             "falcon_compiled_router_minimal", run_stmt
@@ -259,13 +276,13 @@ def main():
     # ----------------------------------------------------------------------- #
     falcon_compiled_router_full = create_falcon_router(lots_of_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "falcon_compiled_router_full.find", "lots_of_uris", i + 1, False
+            "falcon_compiled_router_full.find", "lots_of_uris", i, False
         )
         res["falcon"]["full"]["simple"][k] = measure_router(
             "falcon_compiled_router_full", run_stmt
@@ -275,7 +292,7 @@ def main():
             "FULL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "falcon_compiled_router_full.find", "lots_of_uris", i + 1, True
+            "falcon_compiled_router_full.find", "lots_of_uris", i, True
         )
         res["falcon"]["full"]["complex"][k] = measure_router(
             "falcon_compiled_router_full", run_stmt
@@ -284,13 +301,13 @@ def main():
     # ----------------------------------------------------------------------- #
     kua_router_minimal = create_kua_router(minimal_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "kua_router_minimal.match", "minimal_uris", i + 1, False
+            "kua_router_minimal.match", "minimal_uris", i, False
         )
         res["kua"]["min"]["simple"][k] = measure_router(
             "kua_router_minimal", run_stmt
@@ -300,7 +317,7 @@ def main():
             "MINIMAL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "kua_router_minimal.match", "minimal_uris", i + 1, True
+            "kua_router_minimal.match", "minimal_uris", i, True
         )
         res["kua"]["min"]["complex"][k] = measure_router(
             "kua_router_minimal", run_stmt
@@ -309,13 +326,13 @@ def main():
     # ----------------------------------------------------------------------- #
     kua_router_full = create_kua_router(lots_of_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "kua_router_full.match", "lots_of_uris", i + 1, False
+            "kua_router_full.match", "lots_of_uris", i, False
         )
         res["kua"]["full"]["simple"][k] = measure_router(
             "kua_router_full", run_stmt
@@ -325,7 +342,7 @@ def main():
             "FULL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "kua_router_full.match", "lots_of_uris", i + 1, True
+            "kua_router_full.match", "lots_of_uris", i, True
         )
         res["kua"]["full"]["complex"][k] = measure_router(
             "kua_router_full", run_stmt
@@ -334,13 +351,13 @@ def main():
     # ----------------------------------------------------------------------- #
     routes_router_minimal = create_routes_router(minimal_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "routes_router_minimal.match", "minimal_uris", i + 1, False
+            "routes_router_minimal.match", "minimal_uris", i, False
         )
         res["routes"]["min"]["simple"][k] = measure_router(
             "routes_router_minimal", run_stmt
@@ -350,7 +367,7 @@ def main():
             "MINIMAL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "routes_router_minimal.match", "minimal_uris", i + 1, True
+            "routes_router_minimal.match", "minimal_uris", i, True
         )
         res["routes"]["min"]["complex"][k] = measure_router(
             "routes_router_minimal", run_stmt
@@ -359,13 +376,13 @@ def main():
     # ----------------------------------------------------------------------- #
     routes_router_full = create_routes_router(lots_of_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "routes_router_full.match", "lots_of_uris", i + 1, False
+            "routes_router_full.match", "lots_of_uris", i, False
         )
         res["routes"]["full"]["simple"][k] = measure_router(
             "routes_router_full", run_stmt
@@ -375,7 +392,7 @@ def main():
             "FULL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "routes_router_full.match", "lots_of_uris", i + 1, True
+            "routes_router_full.match", "lots_of_uris", i, True
         )
         res["routes"]["full"]["complex"][k] = measure_router(
             "routes_router_full", run_stmt
@@ -384,7 +401,7 @@ def main():
     # ----------------------------------------------------------------------- #
     sanic_router_minimal = create_sanic_router(minimal_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
@@ -392,7 +409,7 @@ def main():
         run_stmt = gen_stmt(
             "sanic_router_minimal._get",
             "minimal_uris",
-            i + 1,
+            i,
             False,
             is_sanic=True,
         )
@@ -406,7 +423,7 @@ def main():
         run_stmt = gen_stmt(
             "sanic_router_minimal._get",
             "minimal_uris",
-            i + 1,
+            i,
             True,
             is_sanic=True,
         )
@@ -417,7 +434,7 @@ def main():
     # ----------------------------------------------------------------------- #
     sanic_router_full = create_sanic_router(lots_of_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
@@ -425,7 +442,7 @@ def main():
         run_stmt = gen_stmt(
             "sanic_router_full._get",
             "lots_of_uris",
-            i + 1,
+            i,
             False,
             is_sanic=True,
         )
@@ -439,7 +456,7 @@ def main():
         run_stmt = gen_stmt(
             "sanic_router_full._get",
             "lots_of_uris",
-            i + 1,
+            i,
             True,
             is_sanic=True,
         )
@@ -450,7 +467,7 @@ def main():
     # ----------------------------------------------------------------------- #
     xrtr_router_minimal = create_xrtr_router(minimal_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
@@ -458,7 +475,7 @@ def main():
         run_stmt = gen_stmt(
             "xrtr_router_minimal.get",
             "minimal_uris",
-            i + 1,
+            i,
             False,
             is_xrtr=True,
         )
@@ -472,7 +489,7 @@ def main():
         run_stmt = gen_stmt(
             "xrtr_router_minimal.get",
             "minimal_uris",
-            i + 1,
+            i,
             True,
             is_xrtr=True,
         )
@@ -483,13 +500,13 @@ def main():
     # ----------------------------------------------------------------------- #
     xrtr_router_full = create_xrtr_router(lots_of_uris)
 
-    for i, k in enumerate(["ONE", "TWO", "THREE"]):
+    for i, k in enumerate(num_vars):
 
         print_type_of_test(
             "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "xrtr_router_full.get", "lots_of_uris", i + 1, False, is_xrtr=True
+            "xrtr_router_full.get", "lots_of_uris", i, False, is_xrtr=True
         )
         res["xrtr"]["full"]["simple"][k] = measure_router(
             "xrtr_router_full", run_stmt
@@ -499,7 +516,7 @@ def main():
             "FULL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
         )
         run_stmt = gen_stmt(
-            "xrtr_router_full.get", "lots_of_uris", i + 1, True, is_xrtr=True
+            "xrtr_router_full.get", "lots_of_uris", i, True, is_xrtr=True
         )
         res["xrtr"]["full"]["complex"][k] = measure_router(
             "xrtr_router_full", run_stmt
@@ -513,6 +530,11 @@ def main():
     print("-------------------------------------\n")
     for k in res:
         print(">> {}".format(k))
+        print(
+            "  - zero var, min routes: {:.6f} (~{:.2f} iter/sec)".format(
+                *res[k]["min"]["simple"]["ZERO"]
+            )
+        )
         print(
             "  - 1 simple var, min routes: {:.6f} (~{:.2f} iter/sec)".format(
                 *res[k]["min"]["simple"]["ONE"]
@@ -530,6 +552,11 @@ def main():
         )
         print("")
         print(
+            "  - zero var, min routes: {:.6f} (~{:.2f} iter/sec)".format(
+                *res[k]["min"]["complex"]["ZERO"]
+            )
+        )
+        print(
             "  - 1 complex var, min routes: {:.6f} (~{:.2f} iter/sec)".format(
                 *res[k]["min"]["complex"]["ONE"]
             )
@@ -545,6 +572,11 @@ def main():
             )
         )
         print("")
+        print(
+            "  - zero var, full routes: {:.6f} (~{:.2f} iter/sec)".format(
+                *res[k]["full"]["simple"]["ZERO"]
+            )
+        )
         print(
             "  - 1 simple var, full routes: {:.6f} (~{:.2f} iter/sec)".format(
                 *res[k]["full"]["simple"]["ONE"]
@@ -562,6 +594,11 @@ def main():
         )
         print("")
         print(
+            "  - zero var, full routes: {:.6f} (~{:.2f} iter/sec)".format(
+                *res[k]["full"]["complex"]["ZERO"]
+            )
+        )
+        print(
             "  - 1 complex var, full routes: {:.6f} (~{:.2f} iter/sec)".format(
                 *res[k]["full"]["complex"]["ONE"]
             )
@@ -577,6 +614,24 @@ def main():
             )
         )
         print("")
+
+    if "plot" in sys.argv:
+        i = 1
+        frwks = res.keys()
+        type_test = ["min", "full"]
+        var_complexity = ["simple", "complex"]
+        for tt in type_test:
+            for vc in var_complexity:
+                plt.figure(i)
+                i += 1
+                for f in frwks:
+                    series = [res[f][tt][vc][n][0] for n in num_vars]
+                    plt.plot(series, label=f, marker="o")
+                plt.title("{} routes, {} variables".format(tt, vc))
+                plt.legend(loc='lower right')
+                plt.ylabel('Time')
+                plt.xlabel('Variables')
+        plt.show()
 
 
 if __name__ == "__main__":

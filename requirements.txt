@@ -3,3 +3,4 @@ kua
 routes
 xrtr
 falcon
+matplotlib
