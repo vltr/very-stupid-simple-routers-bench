@@ -39,16 +39,25 @@ And wait.
 Yes, visuals can help you better visualize the data gathered by this simple bench. In order to do that, install `matplotlib` (if not already from the `requirements.txt` file) and run:
 
 ```
-$ python bench.py plot
+$ python bench.py --plot
 ```
 
 And some nice graphics will show you some results :wink:
 
+### Full list of options
+
+To get the full list of options (such as skip one or more router or change the number os iterations), see the help message:
+
+```
+$ python bench.py --help
+```
+
+
 ## Results
 
-All tests ran under Python 3.7.0 with 100k iterations (1mi iterations seems like an eternity for certain routers, changed it at will [here](https://github.com/vltr/very-stupid-simple-routers-bench/blob/master/bench.py#L71) if you want to).
+All tests ran under Python 3.7.0 with 100k iterations (1mi iterations seems like an eternity for certain routers, changed it at will using the `--iters N` argument if you **really** want to).
 
-### Arch Linux, Kernel 4.18.6-1-ck-piledriver, AMD FX-8320 @ 3.5GHz / DDR3 @ 2133MHz
+### Arch Linux, Kernel 4.18.9-1-ck-piledriver, AMD FX-8320E @ 3.5GHz / DDR3 @ 2133MHz
 
 ```
 -------------------------------------
@@ -56,89 +65,109 @@ COMPACT RESULT
 -------------------------------------
 
 >> falcon
-  - 1 simple var, min routes: 0.704239 (~141997.24 iter/sec)
-  - 2 simple var, min routes: 1.027677 (~97306.79 iter/sec)
-  - 3 simple var, min routes: 1.341360 (~74551.19 iter/sec)
+  - zero var, min routes: 0.234772 (~425945.77 iter/sec)
+  - 1 simple var, min routes: 0.716286 (~139609.00 iter/sec)
+  - 2 simple var, min routes: 1.053934 (~94882.62 iter/sec)
+  - 3 simple var, min routes: 1.344903 (~74354.82 iter/sec)
 
-  - 1 complex var, min routes: 1.185571 (~84347.51 iter/sec)
-  - 2 complex var, min routes: 1.968017 (~50812.56 iter/sec)
-  - 3 complex var, min routes: 2.776771 (~36013.06 iter/sec)
+  - zero var, min routes: 0.230354 (~434114.73 iter/sec)
+  - 1 complex var, min routes: 1.202745 (~83143.16 iter/sec)
+  - 2 complex var, min routes: 2.002099 (~49947.59 iter/sec)
+  - 3 complex var, min routes: 2.800711 (~35705.22 iter/sec)
 
-  - 1 simple var, full routes: 0.850326 (~117601.94 iter/sec)
-  - 2 simple var, full routes: 1.155972 (~86507.32 iter/sec)
-  - 3 simple var, full routes: 1.456818 (~68642.77 iter/sec)
+  - zero var, full routes: 0.298365 (~335159.98 iter/sec)
+  - 1 simple var, full routes: 0.881712 (~113415.68 iter/sec)
+  - 2 simple var, full routes: 1.252508 (~79839.84 iter/sec)
+  - 3 simple var, full routes: 1.436183 (~69628.99 iter/sec)
 
-  - 1 complex var, full routes: 1.338926 (~74686.72 iter/sec)
-  - 2 complex var, full routes: 2.092623 (~47786.91 iter/sec)
-  - 3 complex var, full routes: 2.875468 (~34776.95 iter/sec)
+  - zero var, full routes: 0.304111 (~328827.42 iter/sec)
+  - 1 complex var, full routes: 1.385500 (~72176.12 iter/sec)
+  - 2 complex var, full routes: 2.241384 (~44615.28 iter/sec)
+  - 3 complex var, full routes: 2.932565 (~34099.84 iter/sec)
 
 >> kua
-  - 1 simple var, min routes: 1.591491 (~62834.15 iter/sec)
-  - 2 simple var, min routes: 2.024441 (~49396.36 iter/sec)
-  - 3 simple var, min routes: 2.463072 (~40599.71 iter/sec)
+  - zero var, min routes: 0.995842 (~100417.56 iter/sec)
+  - 1 simple var, min routes: 1.567503 (~63795.74 iter/sec)
+  - 2 simple var, min routes: 2.021110 (~49477.75 iter/sec)
+  - 3 simple var, min routes: 2.450809 (~40802.86 iter/sec)
 
-  - 1 complex var, min routes: 2.145458 (~46610.11 iter/sec)
-  - 2 complex var, min routes: 3.071196 (~32560.60 iter/sec)
-  - 3 complex var, min routes: 3.983415 (~25104.09 iter/sec)
+  - zero var, min routes: 1.002442 (~99756.42 iter/sec)
+  - 1 complex var, min routes: 2.190235 (~45657.21 iter/sec)
+  - 2 complex var, min routes: 3.073963 (~32531.30 iter/sec)
+  - 3 complex var, min routes: 4.307481 (~23215.43 iter/sec)
 
-  - 1 simple var, full routes: 1.802163 (~55488.89 iter/sec)
-  - 2 simple var, full routes: 2.285745 (~43749.42 iter/sec)
-  - 3 simple var, full routes: 2.834983 (~35273.57 iter/sec)
+  - zero var, full routes: 0.888096 (~112600.45 iter/sec)
+  - 1 simple var, full routes: 1.878441 (~53235.64 iter/sec)
+  - 2 simple var, full routes: 2.370091 (~42192.48 iter/sec)
+  - 3 simple var, full routes: 2.610198 (~38311.28 iter/sec)
 
-  - 1 complex var, full routes: 2.342263 (~42693.76 iter/sec)
-  - 2 complex var, full routes: 3.312664 (~30187.19 iter/sec)
-  - 3 complex var, full routes: 4.478111 (~22330.85 iter/sec)
+  - zero var, full routes: 0.891885 (~112122.06 iter/sec)
+  - 1 complex var, full routes: 2.734446 (~36570.48 iter/sec)
+  - 2 complex var, full routes: 3.417224 (~29263.52 iter/sec)
+  - 3 complex var, full routes: 4.127116 (~24229.99 iter/sec)
 
 >> routes
-  - 1 simple var, min routes: 1.963598 (~50926.91 iter/sec)
-  - 2 simple var, min routes: 2.690208 (~37171.85 iter/sec)
-  - 3 simple var, min routes: 3.142183 (~31825.01 iter/sec)
+  - zero var, min routes: 1.124339 (~88941.16 iter/sec)
+  - 1 simple var, min routes: 2.079985 (~48077.28 iter/sec)
+  - 2 simple var, min routes: 2.697940 (~37065.32 iter/sec)
+  - 3 simple var, min routes: 3.265924 (~30619.20 iter/sec)
 
-  - 1 complex var, min routes: 2.699040 (~37050.21 iter/sec)
-  - 2 complex var, min routes: 3.957306 (~25269.72 iter/sec)
-  - 3 complex var, min routes: 5.075390 (~19702.92 iter/sec)
+  - zero var, min routes: 1.118118 (~89436.00 iter/sec)
+  - 1 complex var, min routes: 2.846352 (~35132.69 iter/sec)
+  - 2 complex var, min routes: 4.093908 (~24426.54 iter/sec)
+  - 3 complex var, min routes: 5.334730 (~18745.09 iter/sec)
 
-  - 1 simple var, full routes: 65.826421 (~1519.15 iter/sec)
-  - 2 simple var, full routes: 66.532962 (~1503.01 iter/sec)
-  - 3 simple var, full routes: 66.543111 (~1502.79 iter/sec)
+  - zero var, full routes: 54.874229 (~1822.35 iter/sec)
+  - 1 simple var, full routes: 59.564871 (~1678.84 iter/sec)
+  - 2 simple var, full routes: 59.553458 (~1679.16 iter/sec)
+  - 3 simple var, full routes: 57.535719 (~1738.05 iter/sec)
 
-  - 1 complex var, full routes: 67.104753 (~1490.21 iter/sec)
-  - 2 complex var, full routes: 67.662397 (~1477.93 iter/sec)
-  - 3 complex var, full routes: 68.831951 (~1452.81 iter/sec)
+  - zero var, full routes: 56.162940 (~1780.53 iter/sec)
+  - 1 complex var, full routes: 59.397681 (~1683.57 iter/sec)
+  - 2 complex var, full routes: 59.642849 (~1676.65 iter/sec)
+  - 3 complex var, full routes: 60.488186 (~1653.22 iter/sec)
 
 >> sanic
-  - 1 simple var, min routes: 1.620019 (~61727.65 iter/sec)
-  - 2 simple var, min routes: 2.238985 (~44663.10 iter/sec)
-  - 3 simple var, min routes: 2.675230 (~37379.96 iter/sec)
+  - zero var, min routes: 0.045980 (~2174861.76 iter/sec)
+  - 1 simple var, min routes: 1.870525 (~53460.94 iter/sec)
+  - 2 simple var, min routes: 2.355239 (~42458.54 iter/sec)
+  - 3 simple var, min routes: 2.819531 (~35466.89 iter/sec)
 
-  - 1 complex var, min routes: 2.330683 (~42905.88 iter/sec)
-  - 2 complex var, min routes: 3.317751 (~30140.90 iter/sec)
-  - 3 complex var, min routes: 4.287243 (~23325.01 iter/sec)
+  - zero var, min routes: 0.047931 (~2086340.58 iter/sec)
+  - 1 complex var, min routes: 2.442416 (~40943.06 iter/sec)
+  - 2 complex var, min routes: 3.557304 (~28111.18 iter/sec)
+  - 3 complex var, min routes: 4.601165 (~21733.63 iter/sec)
 
-  - 1 simple var, full routes: 1.658040 (~60312.18 iter/sec)
-  - 2 simple var, full routes: 2.291906 (~43631.81 iter/sec)
-  - 3 simple var, full routes: 2.755308 (~36293.59 iter/sec)
+  - zero var, full routes: 0.060204 (~1661019.97 iter/sec)
+  - 1 simple var, full routes: 1.831989 (~54585.49 iter/sec)
+  - 2 simple var, full routes: 2.363051 (~42318.17 iter/sec)
+  - 3 simple var, full routes: 2.760774 (~36221.72 iter/sec)
 
-  - 1 complex var, full routes: 2.370231 (~42189.98 iter/sec)
-  - 2 complex var, full routes: 3.423689 (~29208.26 iter/sec)
-  - 3 complex var, full routes: 4.343138 (~23024.83 iter/sec)
+  - zero var, full routes: 0.055037 (~1816967.59 iter/sec)
+  - 1 complex var, full routes: 2.468317 (~40513.43 iter/sec)
+  - 2 complex var, full routes: 3.488036 (~28669.43 iter/sec)
+  - 3 complex var, full routes: 4.403709 (~22708.13 iter/sec)
 
 >> xrtr
-  - 1 simple var, min routes: 0.537971 (~185883.66 iter/sec)
-  - 2 simple var, min routes: 0.869508 (~115007.51 iter/sec)
-  - 3 simple var, min routes: 1.166801 (~85704.40 iter/sec)
+  - zero var, min routes: 0.083421 (~1198742.26 iter/sec)
+  - 1 simple var, min routes: 0.590754 (~169275.06 iter/sec)
+  - 2 simple var, min routes: 0.895412 (~111680.49 iter/sec)
+  - 3 simple var, min routes: 1.194680 (~83704.41 iter/sec)
 
-  - 1 complex var, min routes: 1.020490 (~97992.14 iter/sec)
-  - 2 complex var, min routes: 1.773249 (~56393.67 iter/sec)
-  - 3 complex var, min routes: 2.541739 (~39343.14 iter/sec)
+  - zero var, min routes: 0.083700 (~1194746.91 iter/sec)
+  - 1 complex var, min routes: 1.079695 (~92618.75 iter/sec)
+  - 2 complex var, min routes: 1.855863 (~53883.30 iter/sec)
+  - 3 complex var, min routes: 2.647138 (~37776.65 iter/sec)
 
-  - 1 simple var, full routes: 0.631841 (~158267.67 iter/sec)
-  - 2 simple var, full routes: 0.925295 (~108073.70 iter/sec)
-  - 3 simple var, full routes: 1.242445 (~80486.43 iter/sec)
+  - zero var, full routes: 0.116233 (~860340.84 iter/sec)
+  - 1 simple var, full routes: 0.706042 (~141634.61 iter/sec)
+  - 2 simple var, full routes: 0.999158 (~100084.24 iter/sec)
+  - 3 simple var, full routes: 1.238376 (~80750.90 iter/sec)
 
-  - 1 complex var, full routes: 1.098753 (~91012.23 iter/sec)
-  - 2 complex var, full routes: 1.854167 (~53932.58 iter/sec)
-  - 3 complex var, full routes: 2.639418 (~37887.13 iter/sec)
+  - zero var, full routes: 0.113627 (~880069.78 iter/sec)
+  - 1 complex var, full routes: 1.188098 (~84168.16 iter/sec)
+  - 2 complex var, full routes: 1.947556 (~51346.39 iter/sec)
+  - 3 complex var, full routes: 2.630886 (~38010.00 iter/sec)
 ```
 
 ### Arch Linux, Kernel 4.18.9-1-ck-broadwell, Intel(R) Core(TM) i7-6800K CPU @ 3.40GHz / DDR4 @ 2400MHz
