@@ -10,6 +10,7 @@ from falcon.routing import CompiledRouter
 from routes import Mapper
 from sanic.router import Router
 from xrtr import RadixTree
+from hyprtr import Router as HyprtrRouter
 
 from extras import Endpoint
 from extras import res_factory
@@ -49,7 +50,15 @@ def print_type_of_test(msg):
     print(msg)
 
 
-def gen_stmt(router_call, uris, nvars, complex, is_sanic=False, is_xrtr=False):
+def gen_stmt(
+    router_call,
+    uris,
+    nvars,
+    complex,
+    is_sanic=False,
+    is_hyprtr=False,
+    is_xrtr=False,
+):
     if complex:
         params = ["gen_uuid()"] * nvars
     else:
@@ -70,6 +79,10 @@ def gen_stmt(router_call, uris, nvars, complex, is_sanic=False, is_xrtr=False):
         return "{}({}.{}({}), 'GET', '')".format(
             router_call, uris, fn, ", ".join(params)
         )
+    if is_hyprtr:
+        return "{}(bytes({}.{}({}), 'utf-8'))".format(
+            router_call, uris, fn, ", ".join(params)
+        )
     return "{}({}.{}({}))".format(router_call, uris, fn, ", ".join(params))
 
 
@@ -84,10 +97,10 @@ def measure_router(router_name, run_stmt, times):
     time_each = time_to_run / times
     print(
         "%s: %d results in %f s (%f per sec)"
-        % (router_name, times, time_to_run, 1. / time_each)
+        % (router_name, times, time_to_run, 1.0 / time_each)
     )
     print("")
-    return time_to_run, (1. / time_each)
+    return time_to_run, (1.0 / time_each)
 
 
 def create_falcon_router(uri_data):
@@ -186,6 +199,49 @@ def create_sanic_router(uri_data):
     return router
 
 
+def create_hyprtr_router(uri_data):
+    endpoint = Endpoint("hyprtr")
+    router = HyprtrRouter()
+
+    def format_route(route):
+        route = "/" + "/".join(
+            [
+                part.replace(">", ":int>")
+                if part.isdigit()
+                else part.replace(":*>", ":alpha>")
+                for idx, part in enumerate(route.split("/"))
+                if idx > 0
+            ]
+        )
+        print(route)
+        return route
+
+    # static routes
+    for u in uri_data.get_static_uris():
+        router.add(u, methods=["GET"], handler=endpoint)
+
+    # zero variable
+    template = uri_data.get_zero_var_uri(ParamFormat.HYPRTR)
+    template = format_route(template)
+    router.add(template, methods=["GET"], handler=endpoint)
+    # one variable
+    template = uri_data.get_one_var_uri(ParamFormat.HYPRTR)
+    template = format_route(template)
+    router.add(template, methods=["GET"], handler=endpoint)
+    # two variables
+    template = uri_data.get_two_var_uri(ParamFormat.HYPRTR)
+    template = format_route(template)
+    router.add(template, methods=["GET"], handler=endpoint)
+    # three variables
+    template = uri_data.get_three_var_uri(ParamFormat.HYPRTR)
+    template = format_route(template)
+    router.add(template, methods=["GET"], handler=endpoint)
+
+    router.compile()
+    # done
+    return router
+
+
 def create_xrtr_router(uri_data):
     endpoint = Endpoint("xrtr")
     router = RadixTree()
@@ -245,6 +301,13 @@ def main():
         default=False,
     )
     parser.add_argument(
+        "--skip-hyprtr",
+        action="store_true",
+        help="skip Hyprtr from the benchmark",
+        dest="skip_hyprtr",
+        default=False,
+    )
+    parser.add_argument(
         "--skip-xrtr",
         action="store_true",
         help="skip xrtr from the benchmark",
@@ -294,6 +357,10 @@ def main():
             "min": {"simple": {}, "complex": {}},
             "full": {"simple": {}, "complex": {}},
         },
+        "hyprtr": {
+            "min": {"simple": {}, "complex": {}},
+            "full": {"simple": {}, "complex": {}},
+        },
         "xrtr": {
             "min": {"simple": {}, "complex": {}},
             "full": {"simple": {}, "complex": {}},
@@ -308,6 +375,8 @@ def main():
     global routes_router_full
     global sanic_router_minimal
     global sanic_router_full
+    global hyprtr_router_minimal
+    global hyprtr_router_full
     global xrtr_router_minimal
     global xrtr_router_full
     global minimal_uris
@@ -541,6 +610,74 @@ def main():
             )
 
     # ----------------------------------------------------------------------- #
+    if not args.skip_hyprtr:
+
+        hyprtr_router_minimal = create_hyprtr_router(minimal_uris)
+
+        for i, k in enumerate(num_vars):
+
+            print_type_of_test(
+                "MINIMAL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
+            )
+            run_stmt = gen_stmt(
+                "hyprtr_router_minimal.get",
+                "minimal_uris",
+                i,
+                False,
+                is_hyprtr=True,
+            )
+            res["hyprtr"]["min"]["simple"][k] = measure_router(
+                "hyprtr_router_minimal", run_stmt, args.total_iter
+            )
+
+            print_type_of_test(
+                "MINIMAL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
+            )
+            run_stmt = gen_stmt(
+                "hyprtr_router_minimal.get",
+                "minimal_uris",
+                i,
+                True,
+                is_hyprtr=True,
+            )
+            res["hyprtr"]["min"]["complex"][k] = measure_router(
+                "hyprtr_router_minimal", run_stmt, args.total_iter
+            )
+
+        # ------------------------------------------------------------------- #
+        hyprtr_router_full = create_hyprtr_router(lots_of_uris)
+
+        for i, k in enumerate(num_vars):
+
+            print_type_of_test(
+                "FULL, {} VARIABLE, SIMPLE STRING, NO-REPEAT".format(k)
+            )
+            run_stmt = gen_stmt(
+                "hyprtr_router_full.get",
+                "lots_of_uris",
+                i,
+                False,
+                is_hyprtr=True,
+            )
+            res["hyprtr"]["full"]["simple"][k] = measure_router(
+                "hyprtr_router_full", run_stmt, args.total_iter
+            )
+
+            print_type_of_test(
+                "FULL, {} VARIABLE, COMPLEX STRING, NO-REPEAT".format(k)
+            )
+            run_stmt = gen_stmt(
+                "hyprtr_router_full.get",
+                "lots_of_uris",
+                i,
+                True,
+                is_hyprtr=True,
+            )
+            res["hyprtr"]["full"]["complex"][k] = measure_router(
+                "hyprtr_router_full", run_stmt, args.total_iter
+            )
+
+    # ----------------------------------------------------------------------- #
     if not args.skip_xrtr:
 
         xrtr_router_minimal = create_xrtr_router(minimal_uris)
@@ -611,6 +748,8 @@ def main():
         elif frwk == "routes" and args.skip_routes:
             return True
         elif frwk == "sanic" and args.skip_sanic:
+            return True
+        elif frwk == "hyprtr" and args.skip_hyprtr:
             return True
         elif frwk == "xrtr" and args.skip_xrtr:
             return True
