@@ -9,6 +9,7 @@ class ParamFormat(IntEnum):
     XRTR = 3
     SANIC = 4
     FALCON = 5
+    HYPRTR = 6
 
 
 def get_part_formatter(param_format):
@@ -16,7 +17,7 @@ def get_part_formatter(param_format):
         return uri_type_two
     elif param_format in (ParamFormat.KUA, ParamFormat.XRTR):
         return uri_type_three
-    elif param_format == ParamFormat.SANIC:
+    elif param_format in (ParamFormat.SANIC, ParamFormat.HYPRTR):
         return uri_type_one
 
 
